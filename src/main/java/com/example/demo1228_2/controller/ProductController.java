@@ -4,13 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo1228_2.config.CustomException;
 import com.example.demo1228_2.config.R;
+import com.example.demo1228_2.entity.Buylist;
 import com.example.demo1228_2.entity.Product;
 import com.example.demo1228_2.entity.User;
 import com.example.demo1228_2.mapper.ProductMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpRequest;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import java.util.Map;
 
 @RestController
@@ -73,4 +76,6 @@ public class ProductController {
         }
         return R.success(product);
     }
+
+
 }

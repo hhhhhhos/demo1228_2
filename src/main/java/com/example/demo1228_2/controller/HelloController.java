@@ -1,5 +1,7 @@
 package com.example.demo1228_2.controller;
 
+import com.baomidou.mybatisplus.extension.toolkit.Db;
+import com.example.demo1228_2.config.R;
 import com.example.demo1228_2.entity.User;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -15,9 +17,8 @@ public class HelloController {
 
     @ApiOperation("你好啊")
     @GetMapping("/hello")
-    public String hello(String name){
-
-        return "fuck you059" + name;
+    public Long hello(String name){
+        return Db.count(User.class);
     }
 
     @RequestMapping(value = "post1",method = RequestMethod.POST)

@@ -19,5 +19,6 @@ public class User {
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime create_time;
     private String password;
+    private String role;
 
 }

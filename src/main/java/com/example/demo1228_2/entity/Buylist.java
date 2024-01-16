@@ -4,23 +4,18 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import net.sf.jsqlparser.expression.DateTimeLiteralExpression;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data //自动生成get set方法
-@TableName("t_product") //实体绑定mysql的t_user表（用于mapper的mybatisplus）
-public class Product {
+@TableName("t_buylist") //实体绑定mysql的t_user表（用于mapper的mybatisplus）
+public class Buylist {
     int id;
-    String name;
-    BigDecimal price;
-    int num;
-    String info;
-    String photo;
-
+    int user_id;
+    int product_id;
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime create_time;
+    int product_num;
 
-    String type;
 }

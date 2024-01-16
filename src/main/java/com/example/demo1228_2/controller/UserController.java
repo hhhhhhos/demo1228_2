@@ -128,6 +128,7 @@ public class UserController {
                 log.info("设置session登录IsLogin为true");
                 session.setAttribute("IsLogin",user_result.getId());
                 session.setAttribute("LoginName",user.getName());
+                session.setAttribute("Role",user_result.getRole());
 
                 return R.success("密码正确，登陆成功").add("username",user.getName());
             //如果不一样
@@ -180,10 +181,13 @@ public class UserController {
         }
 
         try{
+            if(user.getPassword()==null)throw new CustomException("密码为空");
+            if(user.getRole()!=null)throw new CustomException("不能自己设定角色");
+            user.setRole("user");
             usermapper.insert(user);
         }catch (Exception e){
             log.info("注册异常:{}",e.getMessage());
-            return R.error("注册失败");
+            return R.error("注册失败:"+e.getMessage());
         }
         log.info("{}注册成功",user.getName());
         return R.success("注册成功");
@@ -191,8 +195,25 @@ public class UserController {
 
     @PutMapping("/update") // 更新user
     public R<String> UserInfoChange(@RequestBody User user,HttpSession session){
+
+        User db_user = usermapper.selectById(session.getAttribute("IsLogin").toString());
+
+        // 未更改任何数据
+        if(db_user.equals(user))return R.error("未改动任何数据");
+        // 不能改角色
+        if(!Objects.equals(db_user.getRole(), user.getRole()))return R.error("不能更改角色");
+
+        // 创建时间和id不能改
+        // 在 Java 中，!= 和 == 运算符用于比较两个对象的引用，而不是它们的值
+        if(!db_user.getCreate_time().equals(user.getCreate_time())){
+            log.info(db_user.getCreate_time().toString());
+            log.info(user.getCreate_time().toString());
+            return R.error("不能更改创建时间");
+        }
+        if(db_user.getId()!=user.getId())return R.error("不能更改Id");
+
         // (如果不是本名，改名字了)查数据库有没相同名
-        if(session.getAttribute("LoginName")!=user.getName()){
+        if(!Objects.equals(session.getAttribute("LoginName").toString(), user.getName())){
             // 创造筛选条件
             LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
             // 有这个名字吗
@@ -201,16 +222,17 @@ public class UserController {
             if(usermapper.selectOne(queryWrapper)!=null)return R.error("名字已存在");
         }
 
-
-        // 创建时间和id不能改
-        User db_user = usermapper.selectById(session.getAttribute("IsLogin").toString());
-        if(db_user.getCreate_time()!=user.getCreate_time())return R.error("不能更改创建时间");
-        if(db_user.getId()!=user.getId())return R.error("不能更改Id");
-
-        // 防数据和数据库长度不对 抛异常
+        // 注入数据库 防数据和数据库长度不对 抛异常
         try{
-            String res = "成功更新"+usermapper.updateById(user)+"行";
+            int num = usermapper.updateById(user);
+            String res = "成功更新"+num +"行";
             log.info(res);
+            // 如果更新成功
+            if(num!=0){
+                // 改session名
+                session.setAttribute("LoginName",user.getName());
+            }
+            session.setAttribute("LoginName",user.getName());
             return R.success(res);
         }catch (Exception e){
             return R.error(e.getMessage());
@@ -222,7 +244,6 @@ public class UserController {
     public List<String> UserInfoChange(HttpSession session){
         // 获取Session中所有的属性名
         Enumeration<String> attributeNames = session.getAttributeNames();
-
         List<String> res = new ArrayList<>();
         // 遍历所有的属性名，打印出每个属性的名字和值
         while (attributeNames.hasMoreElements()) {
@@ -235,4 +256,6 @@ public class UserController {
         }
         return res;
     }
+
+
 }
