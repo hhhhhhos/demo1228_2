@@ -116,8 +116,8 @@ public class UserController {
         try {
             user_result = usermapper.selectOne(queryWrapper);
         }catch (Exception e){
-            log.info("数据库有多个重名用户");
-            return R.error("数据库有多个重名用户");
+            log.info("数据库有多个重名用户或其他："+e.getMessage());
+            return R.error("数据库有多个重名用户："+e.getMessage());
         }
         // 如果查到
         if(user_result!=null){

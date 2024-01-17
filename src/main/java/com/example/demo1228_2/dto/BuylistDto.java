@@ -4,7 +4,7 @@ import com.example.demo1228_2.entity.Buylist;
 import com.example.demo1228_2.entity.Product;
 import lombok.Data;
 
-@Data //自动生成get set方法
+@Data //自动生成get set方法 // Dto耦合entity数据
 public class BuylistDto {
     Buylist buylist;
 
