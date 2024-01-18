@@ -40,7 +40,7 @@ public class TestController {
     public Boolean Test(){
         List<Address> list = new ArrayList<>();
         Address address = new Address();
-        address.setInfo("456456");
+
         address.setDetail("22222");
         address.setName("sb");
         address.setPhone("13313313133");

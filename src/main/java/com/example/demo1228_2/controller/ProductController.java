@@ -30,6 +30,7 @@ public class ProductController {
                                             @RequestParam(required = false) String FType){
         log.info("!!:{}",FType);
         try {
+            Thread.sleep(8000);
             // 空参数抛异常
             if(currentPage == -1 || PageSize == -1 )throw new CustomException("分页查询参数为空");
             // 分页查询
