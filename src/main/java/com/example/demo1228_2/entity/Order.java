@@ -7,12 +7,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data //自动生成get set方法
-@TableName("t_buylist") //实体绑定mysql的t_user表（用于mapper的mybatisplus）
-public class Buylist {
+@TableName("t_order") //实体绑定mysql的t_user表（用于mapper的mybatisplus）
+public class Order {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     Long id;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
@@ -23,6 +22,4 @@ public class Buylist {
     private LocalDateTime create_time;
     int product_num;
     // 防止is被自动省略
-    @JsonProperty("is_selected")
-    boolean is_selected;
 }
