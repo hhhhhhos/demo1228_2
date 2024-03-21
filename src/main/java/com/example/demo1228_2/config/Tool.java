@@ -1,2 +1,196 @@
-package com.example.demo1228_2.config;public class Tool {
+package com.example.demo1228_2.config;
+
+import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.luciad.imageio.webp.WebPWriteParam;
+import nl.basjes.parse.useragent.UserAgentAnalyzer;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.FileImageOutputStream;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import javax.net.ssl.*;
+
+public final class Tool {
+
+    // 存放图片的地址(生产环境时要改)
+    public static final String PHOTO_SAVE_URL = "C:\\Users\\yjz\\Desktop\\作业\\1228_2demo\\11front\\11demo\\src\\assets\\";
+
+    // 密码加密器单例？
+    private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
+    // 发起请求器单例
+    public static final HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_2)
+            .build();
+
+    // user-agent-analyze分析器单例
+    public static final UserAgentAnalyzer uaa = UserAgentAnalyzer.newBuilder().build();
+
+    // 私有构造器，防止实例化
+    private Tool() {
+        throw new AssertionError("Utility class cannot be instantiated");
+    }
+
+    /**
+     * 返回当前时间 年月日-时分秒
+     * @return 返回当前时间 年月日-时分秒
+     */
+    public static String getDateTime() {
+        return java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    }
+
+    /**
+     * 加密密码
+     * @param rawPassword 原始密码
+     * @return 加密后的密码
+     */
+    public static String encode(String rawPassword) {
+        return encoder.encode(rawPassword);
+    }
+
+    /**
+     * 验证密码是否匹配
+     * @param rawPassword 原始密码
+     * @param encodedPassword 加密后的密码
+     * @return 如果原始密码与加密密码匹配，返回true；否则返回false。
+     */
+    public static boolean matches(String rawPassword, String encodedPassword) {
+        return encoder.matches(rawPassword, encodedPassword);
+    }
+
+    /**
+     * 存图片到本地（会生成时间戳）
+     * @param photo 图片
+     * @param path 路径
+     */
+    public static void saveFile(MultipartFile photo, String path) throws IOException {
+        File dir = new File(path);
+        if (!dir.exists()) {
+            dir.mkdir();
+        }
+        // 获取原始文件名
+        String originalFileName = photo.getOriginalFilename();
+        // 提取文件名（不含扩展名）
+        String fileNameWithoutExt = originalFileName.substring(0, originalFileName.lastIndexOf('.'));
+        // 提取文件扩展名
+        String extension = originalFileName.substring(originalFileName.lastIndexOf('.'));
+        // 构造新的文件名（包含时间戳）
+        String newFileName = fileNameWithoutExt + "." + System.currentTimeMillis() + extension;
+        File file = new File(dir, newFileName);
+
+        photo.transferTo(file);
+    }
+
+
+    /**
+     * 检查目录PHOTO_SAVE_URL中是否存在具有特定名称的文件
+     *
+     * @param targetFileName 要搜索的文件名（包括扩展名）
+     * @return 存在返回true，否则返回false
+     */
+    public static boolean checkFileExists(String targetFileName) {
+        File directory = new File(PHOTO_SAVE_URL);
+        if (directory.exists() && directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().equals(targetFileName)) {
+                        return true; // 找到匹配的文件名
+                    }
+                }
+            }
+        }
+        return false; // 未找到匹配的文件名
+    }
+
+
+    /**
+     * 转换为Webp并存储到本地 (会生成时间戳）
+     * @param photo 图片
+     * @return 图片名字字符串（带.webp）
+     */
+    public static String convertToWebp(MultipartFile photo) {
+        // 确保保存路径存在
+        File saveDir = new File(PHOTO_SAVE_URL);
+        if (!saveDir.exists()) {
+            saveDir.mkdirs();
+        }
+
+        try (InputStream input = photo.getInputStream()) {
+            BufferedImage image = ImageIO.read(input);
+
+            // 使用LocalDateTime和DateTimeFormatter获取当前的年月日时分
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+            String formattedDate = now.format(formatter);
+
+            // 构造新的文件名（包含时间戳）
+            String newFileName = "product" + generateRandomString(6) + "_" + formattedDate + ".webp";
+
+            File outputFile = new File(saveDir, newFileName);
+
+            ImageWriter writer = ImageIO.getImageWritersByMIMEType("image/webp").next();
+            WebPWriteParam writeParam = new WebPWriteParam(writer.getLocale());
+            writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            writeParam.setCompressionType(writeParam.getCompressionTypes()[WebPWriteParam.LOSSY_COMPRESSION]);
+            writeParam.setCompressionQuality(0.8f); // 设置压缩质量
+
+            try (ImageOutputStream outputStream = ImageIO.createImageOutputStream(outputFile)) {
+                writer.setOutput(outputStream);
+                writer.write(null, new IIOImage(image, null, null), writeParam);
+            }
+            return newFileName;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to convert image to WebP", e);
+        }
+    }
+
+    /**
+     * 删除图片.webp
+     * @param name 图片名字.webp
+     * @return 是否删除成功
+     */
+    public static Boolean deleteOneWebp(String name){
+        // 指定要删除的文件路径
+        String filePath = Tool.PHOTO_SAVE_URL + name; // 替换为实际的文件路径
+        File file = new File(filePath);
+        // 尝试删除文件
+        return file.delete();
+    }
+
+    /**
+     * 生成随机数（字母数字）
+     * @param length 随机数个数
+     * @return 返回随机数
+     * */
+    private static String generateRandomString(int length) {
+        String charPool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder sb = new StringBuilder(length);
+        Random random = new Random();
+        for (int i = 0; i < length; i++) {
+            int index = random.nextInt(charPool.length());
+            sb.append(charPool.charAt(index));
+        }
+        return sb.toString();
+    }
 }

@@ -1,5 +1,6 @@
 package com.example.demo1228_2.config;
 
+import com.example.demo1228_2.interceptors.AdminInterceptor;
 import com.example.demo1228_2.interceptors.LoginInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,10 +14,16 @@ public class WebConfig implements WebMvcConfigurer { //拦截器配置
     @Autowired
     private LoginInterceptor loginInterceptor;
 
+    @Autowired
+    private AdminInterceptor adminInterceptor;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor)
-                .excludePathPatterns("/user/login","/user/regis","/product/**","/error");
+                .excludePathPatterns("/vue-admin-template/user/login","/user/login","/user/regis","/product/**","/error","/test/notifyUrl");
+
+        registry.addInterceptor(adminInterceptor)
+                .excludePathPatterns("/order/selectbyadmin","/product/selectbyadmin","/user/selectbyadmin","/user-agent-details/selectbyadmin");
     }
 
 }

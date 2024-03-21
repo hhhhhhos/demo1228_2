@@ -1,5 +1,6 @@
-package com.example.demo1228_2.config;
+package com.example.demo1228_2.service.impl;
 
+import com.example.demo1228_2.config.DelayedTask;
 import com.example.demo1228_2.dto.DelayedTaskDto;
 import org.springframework.stereotype.Service;
 

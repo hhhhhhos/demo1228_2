@@ -16,6 +16,8 @@ public class R<T> {
 
     private String msg; //错误信息
 
+    private String message; // vue-admin-template要
+
     private T data; //数据
 
     private Map map = new HashMap(); //动态数据
@@ -37,6 +39,17 @@ public class R<T> {
     public R<T> add(String key, Object value) {
         this.map.put(key, value);
         return this;
+    }
+
+    // 默认构造函数
+    public R() {
+    }
+
+    // 带参数的构造函数
+    public R(Integer code, String message,T data) {
+        this.code = code;
+        this.message = message;
+        this.data = data;
     }
 
 }
