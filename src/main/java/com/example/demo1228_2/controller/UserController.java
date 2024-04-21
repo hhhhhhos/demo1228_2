@@ -534,7 +534,7 @@ public class UserController {
             query.le(User::getCreate_time, params.get("endDate")); // le是“less than or equal to”的缩写
         }
         if (params.get("id") != null) {
-            query.eq(User::getId, params.get("id"));
+            query.like(User::getId, params.get("id"));
         }
 
         Page<User> page = new Page<>(1,10);

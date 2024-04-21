@@ -277,7 +277,7 @@ public class ProductController {
             query.le(Product::getCreate_time, params.get("endDate")); // le是“less than or equal to”的缩写
         }
         if (params.get("id") != null) {
-            query.eq(Product::getId, params.get("id"));
+            query.like(Product::getId, params.get("id"));
         }
 
         Page<Product> page = new Page<>(1,10);

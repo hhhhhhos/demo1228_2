@@ -55,6 +55,7 @@ public class UserAgentDetailsServiceImpl extends ServiceImpl<UserAgentDetailsMap
         String forwardedProto = params.get("forwardedProto");
         String originalURI = params.get("originalURI");
         String method = params.get("method");
+        String visitor_name = params.get("visitor_name");
         // endregion
 
         // region 获取ip的城市（发请求）
@@ -98,13 +99,14 @@ public class UserAgentDetailsServiceImpl extends ServiceImpl<UserAgentDetailsMap
         // 分析userAgent
         UserAgent userAgent = Tool.uaa.parse(userAgent_s);
         UserAgentDetails userAgentDetails = new UserAgentDetails(userAgent);
-        // 和set 6个附加信息
+        // 和set 7个附加信息
         userAgentDetails.setRealIp(realIp);
         userAgentDetails.setForwardedProto(forwardedProto);
         userAgentDetails.setOriginalURI(originalURI);
         userAgentDetails.setMethod(method);
         userAgentDetails.setUser_uuid(uuid);
         userAgentDetails.setCity(location);
+        userAgentDetails.setVisitor_name(visitor_name);
         // endregion
 
         // 插入数据库

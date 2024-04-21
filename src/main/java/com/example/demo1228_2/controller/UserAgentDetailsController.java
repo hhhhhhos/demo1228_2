@@ -23,7 +23,7 @@ import java.util.Map;
 
 /**
  * <p>
- *  前端控制器
+ *  查访客记录的
  * </p>
  *
  * @author yjz
@@ -42,10 +42,58 @@ public class UserAgentDetailsController {
         // 使用LambdaQueryChainWrapper构建查询
         LambdaQueryChainWrapper<UserAgentDetails> query = new LambdaQueryChainWrapper<>(userAgentDetailsMapper);
 
+        /*
+          "ip": null,
+          "ip_location":null,
+          "url":null,
+          "method":null,
+          "device":null,
+          "brand":null,
+          "brand_version":null,
+          "os":null,
+          "os_version":null,
+          "browser":null,
+          "uuid":null,
+        */
+
+
         // 根据条件动态添加查询条件
-        if (params.get("city") != null) {
-            query.like(UserAgentDetails::getCity, params.get("city"));
+        if (params.get("ip") != null) {
+            query.like(UserAgentDetails::getRealIp, params.get("ip"));
         }
+        if (params.get("ip_location") != null) {
+            query.like(UserAgentDetails::getCity, params.get("ip_location"));
+        }
+        if (params.get("url") != null) {
+            query.like(UserAgentDetails::getOriginalURI, params.get("url"));
+        }
+        if (params.get("method") != null) {
+            query.like(UserAgentDetails::getMethod, params.get("method"));
+        }
+        if (params.get("device") != null) {
+            query.like(UserAgentDetails::getDeviceName, params.get("device"));
+        }
+        if (params.get("brand") != null) {
+            query.like(UserAgentDetails::getDeviceBrand, params.get("brand"));
+        }
+        if (params.get("brand_version") != null) {
+            query.like(UserAgentDetails::getDeviceVersion, params.get("brand_version"));
+        }
+        if (params.get("os") != null) {
+            query.like(UserAgentDetails::getOperatingSystemName, params.get("os"));
+        }
+        if (params.get("os_version") != null) {
+            query.like(UserAgentDetails::getOperatingSystemVersion, params.get("os_version"));
+        }
+        if (params.get("browser") != null) {
+            query.like(UserAgentDetails::getAgentName, params.get("browser"));
+        }
+        if (params.get("uuid") != null) {
+            query.like(UserAgentDetails::getUser_uuid, params.get("uuid"));
+        }
+
+
+
         // 单独处理startDate，如果存在则查询大于等于这个日期的记录
         if (params.get("startDate") != null) {
             query.ge(UserAgentDetails::getCreate_time, params.get("startDate")); // ge是“greater than or equal to”的缩写
@@ -54,9 +102,7 @@ public class UserAgentDetailsController {
         if (params.get("endDate") != null) {
             query.le(UserAgentDetails::getCreate_time, params.get("endDate")); // le是“less than or equal to”的缩写
         }
-        if (params.get("id") != null) {
-            query.eq(UserAgentDetails::getId, params.get("id"));
-        }
+
 
         Page<UserAgentDetails> page = new Page<>(1,10);
         // 防空参数
@@ -75,5 +121,7 @@ public class UserAgentDetailsController {
 
         return response;
     }
+
+
 
 }

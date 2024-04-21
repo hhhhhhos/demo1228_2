@@ -72,6 +72,15 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
         if(originalURI!=null && originalURI.length()>200)
             originalURI = originalURI.substring(0, 200);
         String method = request.getMethod();
+
+        // 有无登录，登陆了存名字
+        String visitor_name = null;
+        try{
+            visitor_name  = request.getSession().getAttribute("LoginName").toString();
+        }catch (Exception e){
+            log.info("not_login");
+        }
+
         log.info("X-Real-IP:{}",realIp);
         log.info("User-Agent:{}",userAgent_s);
 
@@ -82,6 +91,7 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
         params.put("originalURI",originalURI);
         params.put("method",method);
         params.put("uuid",uuid);
+        params.put("visitor_name",visitor_name);
 
         return params;
     }
@@ -99,15 +109,15 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
             for(Cookie cookie:cookies){
                 log.info("{}:{}",cookie.getName(),cookie.getValue());
                 if(cookie.getName().equals("user_uuid")){
-                    if(cookie.getPath()==null||!cookie.getPath().equals("/"))
-                        break;
+                    log.info("cookie.getName().equals(\"user_uuid\")!path is:{}",cookie.getPath());
                     uuid = cookie.getValue();
                     break;
                 }
             }
         if(uuid.equals("doesn't exist")){
+            log.info("uuid doesn't exist,generate new..");
             uuid = UUID.randomUUID().toString();
-            Cookie cookie = new Cookie("user-uuid",uuid);
+            Cookie cookie = new Cookie("user_uuid",uuid);
             cookie.setMaxAge(60*60*24*365*5); // 不设置默认会话关闭就没了
             cookie.setPath("/");
             response.addCookie(cookie);

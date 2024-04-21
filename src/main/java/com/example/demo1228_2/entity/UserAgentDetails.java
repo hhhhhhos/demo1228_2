@@ -64,6 +64,8 @@ public class UserAgentDetails {
 
     private String city;
 
+    private String visitor_name;
+
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @TableField(fill = FieldFill.INSERT)
