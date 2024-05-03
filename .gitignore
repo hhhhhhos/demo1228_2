@@ -33,5 +33,5 @@ build/
 .vscode/
 
 # 这里都是密码之类的 不能上传啊
-application.properties
-SecretDatas
+src/main/resources/application.properties
+
