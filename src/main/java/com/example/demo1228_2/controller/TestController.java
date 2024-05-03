@@ -8,10 +8,19 @@ import com.example.demo1228_2.config.*;
 import com.example.demo1228_2.dto.DelayedTaskDto;
 import com.example.demo1228_2.entity.Test;
 import com.example.demo1228_2.service.impl.*;
+import com.google.code.kaptcha.impl.DefaultKaptcha;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import redis.clients.jedis.Jedis;
 
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletResponse;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +28,7 @@ import java.util.Random;
 
 /**
  * <p>
- *  前端控制器
+ *  专门接受外部请求 比如支付宝 微信 不被拦截器拦截
  * </p>
  *
  * @author yjz
@@ -30,6 +39,7 @@ import java.util.Random;
 @RequestMapping("/test")
 public class TestController {
 
+    /*
     @Autowired
     TestServiceImpl testService;
 
@@ -208,7 +218,7 @@ public class TestController {
         log.info("{}",test);
         return test;
     }
-
+    */
 
     @Autowired
     DelayQueueService delayQueueService;
@@ -239,7 +249,28 @@ public class TestController {
         return delayQueueService.removeTask(task);
     }
 
+    @GetMapping("/fuck")
+    public ResponseEntity<byte[]> getCaptcha(HttpServletResponse response) throws IOException {
+        CaptchaGenerator generator = new CaptchaGenerator();
+        DefaultKaptcha kaptcha = generator.createKaptcha();
+        String text = kaptcha.createText();  // 生成验证码文本
 
+        // 通常这里还会将验证码文本存储在Session中，以便验证用户输入
+        // request.getSession().setAttribute("CAPTCHA_KEY", text);
+
+        BufferedImage image = kaptcha.createImage(text);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", baos);
+
+        // 清除缓存
+        response.setHeader("Cache-Control", "no-store");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
+        response.setContentType("image/png");
+
+        log.info("验证码：{}",text);
+        return new ResponseEntity<>(baos.toByteArray(), HttpStatus.OK);
+    }
 
     @Autowired
     private AlipayService alipayService;
@@ -247,6 +278,11 @@ public class TestController {
     @Autowired
     private AlipayProperties alipayProperties;
 
+    /**
+     * 这里好像接收前端get请求之后 返回一个重定向html 会跳转阿里支付页
+     * @param model 参数
+     * @return 返回一个重定向html 会跳转阿里支付页
+     */
     @GetMapping("/pay")
     public String pay(AlipayTradePagePayModel model) {
         try {
@@ -256,6 +292,8 @@ public class TestController {
             return "支付失败";
         }
     }
+
+
 
     @Autowired
     OrderServiceImpl orderService;
@@ -296,4 +334,20 @@ public class TestController {
         }
 
     }
+
+    /**
+     * 微信登录回调测试1
+     */
+    @GetMapping("/wechat_login")
+    public Map<String, String> pay(@RequestParam Map<String, String> params) {
+        log.info("测试微信！！！！！");
+        // 遍历Map
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            log.info("Key: " + entry.getKey() + ", Value: " + entry.getValue());
+        }
+
+        return params;
+    }
+
+
 }

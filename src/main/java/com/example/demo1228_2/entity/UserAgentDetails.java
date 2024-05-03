@@ -62,9 +62,19 @@ public class UserAgentDetails {
 
     private String user_uuid;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private Long user_id;
+
     private String city;
 
     private String visitor_name;
+
+    String wechat_nickname;
+
+    String wechat_unionid;
+
+    String wechat_headimgurl;
+
 
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)

@@ -5,12 +5,13 @@ import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapp
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.example.demo1228_2.config.CustomException;
+import com.example.demo1228_2.config.GlobalProperties;
 import com.example.demo1228_2.config.R;
 import com.example.demo1228_2.config.Tool;
-import com.example.demo1228_2.entity.Buylist;
-import com.example.demo1228_2.entity.Product;
-import com.example.demo1228_2.entity.User;
+import com.example.demo1228_2.entity.*;
+import com.example.demo1228_2.mapper.DataResultMapper;
 import com.example.demo1228_2.mapper.ProductMapper;
+import com.example.demo1228_2.mapper.ProductRateMapper;
 import com.example.demo1228_2.service.impl.ProductServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -23,10 +24,12 @@ import javax.imageio.ImageIO;
 import javax.servlet.http.HttpSession;
 import java.io.File;
 import java.io.FileInputStream;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/product")
@@ -35,29 +38,47 @@ public class ProductController {
     @Autowired
     ProductMapper productmapper;
 
+    @Autowired
+    DataResultMapper dataResultMapper;
+
+    @Autowired
+    ProductRateMapper productRateMapper;
+
+    @Autowired
+    GlobalProperties globalProperties;
+
     @GetMapping("/page") // 分页查询 接收params //防空设默认
-    public R<Page<Product>> FindPageProduct(@RequestParam(defaultValue = "-1")int currentPage,
-                                            @RequestParam(defaultValue = "-1")int PageSize,
-                                            @RequestParam(required = false) String FName,
-                                            @RequestParam(required = false) String FType){
+    public R<Page<Product>> FindPageProduct(@RequestParam Map<String,String> params){
         //log.info("!!:{}",FType);
         try {
+
+            int currentPage = Integer.parseInt(params.get("currentPage"));
+            int PageSize = Integer.parseInt(params.get("PageSize"));
+            String FName = params.get("FName");
+            String FType = params.get("FType");
+            String value2 = params.get("value2");
+
+            LambdaQueryChainWrapper<Product> query = new LambdaQueryChainWrapper<>(productmapper);
+
             // 空参数抛异常
-            if(currentPage == -1 || PageSize == -1 )throw new CustomException("分页查询参数为空");
+            if(currentPage == 0 || PageSize == 0 )throw new CustomException("分页查询参数为空");
             // 分页查询
             Page<Product> page = new Page<>(currentPage, PageSize);
 
-            // 创建LambdaQueryWrapper实例筛选器
-            LambdaQueryWrapper<Product> queryWrapper = new LambdaQueryWrapper<>();
-            // 根据id从低到高排序
-            queryWrapper.orderByAsc(Product::getId);
             // FName不为空 筛选名字
-            if(FName != null)queryWrapper.like(Product::getName,FName);
+            if(FName != null)query.like(Product::getName,FName);
             // FType不为空 筛选种类
-            if(FType != null)queryWrapper.eq(Product::getType,FType);
+            if(FType != null)query.eq(Product::getType,FType);
+
+            if(value2 != null){
+                PageQueryValue2(query, value2);
+            }
+
+
+
 
             // 执行查询
-            Page<Product> res = productmapper.selectPage(page, queryWrapper);
+            Page<Product> res = query.page(page);
 
             /*
             //控制台打印json
@@ -67,7 +88,12 @@ public class ProductController {
             //
             */
             log.info("分页查询成功");
-            return R.success(res);
+            // 访客加一
+            DataResult dataResult = dataResultMapper.selectById(45698);
+            dataResult.setHome_visitors(dataResult.getHome_visitors()+1);
+            dataResultMapper.updateById(dataResult);
+
+            return R.success(res).add("home_visitors",dataResult.getHome_visitors());
         }catch(Exception e){
             log.info("分页查询失败：{}",e.getMessage());
             return R.error(e.getMessage());
@@ -82,11 +108,19 @@ public class ProductController {
         if(id ==-1)return R.error("id为空");
         try{
             product = productmapper.selectById(id);
+            if(product != null){
+                // 浏览量加一
+                product.setVisited_num(product.getVisited_num()+1);
+                productmapper.updateById(product);
+            }
         }catch(Exception e){
             log.info("查一个商品失败：{}",e.getMessage());
             return R.error(e.getMessage());
         }
-        return R.success(product);
+
+        //log.info("{},{}",averageRate,productRateList.size());
+        return R.success(product).add("rate_value",product.getRate())
+                .add("rate_num",product.getRate_num());
     }
 
     /**
@@ -279,6 +313,11 @@ public class ProductController {
         if (params.get("id") != null) {
             query.like(Product::getId, params.get("id"));
         }
+        // 排序方式
+        if (params.get("value2") != null) {
+            String value2 = params.get("value2");
+            PageQueryValue2(query, value2);
+        }
 
         Page<Product> page = new Page<>(1,10);
         // 防空参数
@@ -292,5 +331,26 @@ public class ProductController {
         response.setMap(params);
 
         return response;
+    }
+
+    private void PageQueryValue2(LambdaQueryChainWrapper<Product> query, String value2) {
+        switch(value2){
+            case "a":
+                break;
+            case "b":
+                query.orderByDesc(Product::getCreate_time);
+                break;
+            case "c":
+                query.orderByDesc(Product::getVisited_num);
+                break;
+            case "d":
+                query.orderByDesc(Product::getSold_num);
+                break;
+            case "e":
+                query.orderByDesc(Product::getRate);
+                break;
+            default:
+                break;
+        }
     }
 }

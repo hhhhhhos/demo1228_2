@@ -1,13 +1,23 @@
 package com.example.demo1228_2.config;
 
+import cn.hutool.extra.mail.MailAccount;
+import cn.hutool.extra.mail.MailUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.example.demo1228_2.entity.DataResult;
+import com.example.demo1228_2.mapper.DataResultMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.luciad.imageio.webp.WebPWriteParam;
+import lombok.extern.slf4j.Slf4j;
 import nl.basjes.parse.useragent.UserAgentAnalyzer;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.PostConstruct;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
@@ -28,11 +38,29 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import javax.net.ssl.*;
+import javax.servlet.http.HttpSession;
+import redis.clients.jedis.Jedis;
 
+/**
+ * <p>
+ *  静态工具类
+ * </p>
+ *
+ * @author yjz
+ * @since 2024-04-22
+ */
+@Slf4j
 public final class Tool {
 
-    // 存放图片的地址(生产环境时要改)
-    public static final String PHOTO_SAVE_URL = "C:\\Users\\yjz\\Desktop\\作业\\1228_2demo\\11front\\11demo\\src\\assets\\";
+    private static final String SMTP_HOST = "smtp.163.com";
+    private static final int SMTP_PORT = 25;
+    private static final String EMAIL_USERNAME = "blogsendhelper@163.com";
+    public static String EMAIL_PASSWORD;
+    public static String PHOTO_SAVE_URL;
+    private static final String EMAIL_REGEX =
+            "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@" +
+                    "(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+
 
     // 密码加密器单例？
     private static final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
@@ -48,6 +76,16 @@ public final class Tool {
     // 私有构造器，防止实例化
     private Tool() {
         throw new AssertionError("Utility class cannot be instantiated");
+    }
+
+
+    /**
+     * 返回用户在服务器session里的ID
+     * @param session 你懂的
+     * @return Long
+     */
+    public static Long getUserSessionId(HttpSession session){
+        return Long.parseLong(session.getAttribute("IsLogin").toString());
     }
 
     /**
@@ -174,8 +212,50 @@ public final class Tool {
         // 指定要删除的文件路径
         String filePath = Tool.PHOTO_SAVE_URL + name; // 替换为实际的文件路径
         File file = new File(filePath);
+        // 如果是 noproduct.webp 不能删除！默认图片！
+        if(name.equals("noproduct.webp"))return true;
         // 尝试删除文件
         return file.delete();
+    }
+
+    /**
+     * 发邮件
+     * @param to 给谁
+     * @param subject 标题
+     * @param content 内容
+     * @throws Exception 抛！
+     */
+    public static void sendEmail(String to, String subject, String content)throws Exception {
+        if (to==null) {
+            throw new CustomException("收件人不能为空");
+        }
+        if (subject==null) {
+            throw new CustomException("邮件主题不能为空");
+        }
+        if (content==null) {
+            throw new CustomException("邮件内容不能为空");
+        }
+
+        MailAccount account = new MailAccount();
+        account.setHost(SMTP_HOST);
+        account.setPort(SMTP_PORT);
+        account.setAuth(true);
+        account.setFrom(EMAIL_USERNAME);
+        account.setUser(EMAIL_USERNAME);
+        account.setPass(EMAIL_PASSWORD);
+
+        MailUtil.send(account, to, subject, content, true);
+
+
+    }
+
+    /**
+     * 邮箱正则检查
+     * @param email 1
+     * @return 1
+     */
+    public static boolean isValidEmail(String email) {
+        return email.matches(EMAIL_REGEX);
     }
 
     /**

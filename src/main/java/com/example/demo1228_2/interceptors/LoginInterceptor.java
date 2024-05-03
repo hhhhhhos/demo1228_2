@@ -73,10 +73,17 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
             originalURI = originalURI.substring(0, 200);
         String method = request.getMethod();
 
-        // 有无登录，登陆了存名字
+        // 有无登录，登陆了存名字 有无微信名
         String visitor_name = null;
+        String wechat_nickname = null;
+        String user_id = null;
         try{
             visitor_name  = request.getSession().getAttribute("LoginName").toString();
+            // 已登录
+            if(visitor_name!=null){
+                wechat_nickname  = request.getSession().getAttribute("Wechat_nickname").toString();
+                user_id  = request.getSession().getAttribute("IsLogin").toString();
+            }
         }catch (Exception e){
             log.info("not_login");
         }
@@ -91,7 +98,8 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
         params.put("originalURI",originalURI);
         params.put("method",method);
         params.put("uuid",uuid);
-        params.put("visitor_name",visitor_name);
+        params.put("wechat_nickname",wechat_nickname);
+        params.put("user_id",user_id);
 
         return params;
     }
@@ -107,7 +115,7 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
         Cookie[] cookies = request.getCookies();
         if(cookies != null)
             for(Cookie cookie:cookies){
-                log.info("{}:{}",cookie.getName(),cookie.getValue());
+                //log.info("{}:{}",cookie.getName(),cookie.getValue());
                 if(cookie.getName().equals("user_uuid")){
                     log.info("cookie.getName().equals(\"user_uuid\")!path is:{}",cookie.getPath());
                     uuid = cookie.getValue();

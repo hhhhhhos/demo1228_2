@@ -1,6 +1,7 @@
 package com.example.demo1228_2.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import com.example.demo1228_2.config.CustomException;
 import com.example.demo1228_2.config.Tool;
 import com.example.demo1228_2.entity.UserAgentDetails;
 import com.example.demo1228_2.mapper.UserAgentDetailsMapper;
@@ -56,16 +57,19 @@ public class UserAgentDetailsServiceImpl extends ServiceImpl<UserAgentDetailsMap
         String originalURI = params.get("originalURI");
         String method = params.get("method");
         String visitor_name = params.get("visitor_name");
+        String wechat_nickname = params.get("wechat_nickname");
+        Long user_id = Long.parseLong(params.get("user_id"));
         // endregion
 
         // region 获取ip的城市（发请求）
         String location = "火星人"; // 默认值
         try{
-            log.info(realIp);
+            if(realIp == null)throw new CustomException("ip为空");
+            log.info("realIp:{}",realIp);
             log.info("https://api.vore.top/api/IPdata?ip="+realIp);
             Map<String,String> map = new HashMap<>();
-            if(realIp!=null)
-                map = httpService.sendGet("https://api.vore.top/api/IPdata?ip="+realIp);
+
+            map = httpService.sendGet("https://api.vore.top/api/IPdata?ip="+realIp);
             log.info(map.get("statusCode"));
 
 
@@ -107,6 +111,8 @@ public class UserAgentDetailsServiceImpl extends ServiceImpl<UserAgentDetailsMap
         userAgentDetails.setUser_uuid(uuid);
         userAgentDetails.setCity(location);
         userAgentDetails.setVisitor_name(visitor_name);
+        userAgentDetails.setWechat_nickname(wechat_nickname);
+        userAgentDetails.setUser_id(user_id);
         // endregion
 
         // 插入数据库

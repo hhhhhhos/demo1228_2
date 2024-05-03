@@ -71,6 +71,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 Product product = productMapper.selectById(product_Id);
                 // 数量加本身
                 product.setNum(product.getNum() + product_num);
+                // 销量减去
+                product.setSold_num(product.getSold_num() - product_num);
                 if(productMapper.updateById(product)==0)
                     throw new CustomException("商品"+product.getName()+"回架失败,请重试");
                 buylistList.add(buylistDto.getBuylist());

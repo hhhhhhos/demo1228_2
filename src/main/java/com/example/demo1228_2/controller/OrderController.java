@@ -213,7 +213,7 @@ public class OrderController {
         if(params.get("currentPage")!=null && params.get("PageSize")!=null)
             page = new Page<>(Long.parseLong(params.get("currentPage")),Long.parseLong(params.get("PageSize")));
         // 执行分页查询
-        Page<Order> result = query.page(page);
+        Page<Order> result = query.orderByDesc(Order::getCreate_time).page(page);
 
         // map返回筛选
         R<Page<Order>> response = R.success(result);

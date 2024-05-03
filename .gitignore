@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# 这里都是密码之类的 不能上传啊
+application.properties
+SecretDatas

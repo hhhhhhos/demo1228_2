@@ -39,4 +39,17 @@ public class User {
 
     @Version
     private Integer version; // 乐观锁版本号
+
+    String wechat_unionid;
+
+    String wechat_nickname;
+
+    String wechat_headimgurl;
+
+    public User(String name,String password){
+        this.name = name;
+        this.password = password;
+    }
+
+    public User(){}
 }

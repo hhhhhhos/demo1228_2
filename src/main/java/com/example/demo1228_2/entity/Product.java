@@ -36,6 +36,13 @@ public class Product {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     Long user_id;
 
+    int visited_num;
+
+    int sold_num;
+
+    BigDecimal rate;
+
+    int rate_num;
     @Version
     private Integer version; // 乐观锁版本号
 }

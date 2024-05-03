@@ -37,7 +37,7 @@ public class HttpService {
         Map<String,String> map = new HashMap<>();
         map.put("statusCode",String.valueOf(response.statusCode()));
         map.put("body",response.body());
-
+        log.info("我是{}网络请求返回码：{}。内容：{}",Thread.currentThread().getId(),response.statusCode(),response.body());
         log.info("我是{}网络请求结束",Thread.currentThread().getId());
         //Thread.sleep(6000);
         return map;

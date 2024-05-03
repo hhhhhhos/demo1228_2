@@ -20,10 +20,12 @@ public class WebConfig implements WebMvcConfigurer { //拦截器配置
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor)
-                .excludePathPatterns("/vue-admin-template/user/login","/user/login","/user/regis","/product/**","/error","/test/notifyUrl");
+                .excludePathPatterns("/vue-admin-template/user/login","/user/login","/user/regis","/product/**","/error"
+                        ,"/test/notifyUrl","/user/loginByWechat","/user/loginByEmail","/user/sendEmail","/user/getCaptch");
 
         registry.addInterceptor(adminInterceptor)
-                .excludePathPatterns("/order/selectbyadmin","/product/selectbyadmin","/user/selectbyadmin","/user-agent-details/selectbyadmin");
+                .excludePathPatterns("/order/selectpagebyadmin","/product/selectpagebyadmin","/user/selectpagebyadmin",
+                        "/user-agent-details/selectbyadmin");
     }
 
 }
