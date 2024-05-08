@@ -3,6 +3,7 @@ package com.example.demo1228_2.controller;
 
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.domain.AlipayTradePagePayModel;
+import com.alipay.api.domain.AlipayTradeWapPayModel;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.example.demo1228_2.config.*;
 import com.example.demo1228_2.dto.DelayedTaskDto;
@@ -286,7 +287,23 @@ public class TestController {
     @GetMapping("/pay")
     public String pay(AlipayTradePagePayModel model) {
         try {
-            return alipayService.pay(model);
+            log.info("ProductCode:{}",model.getProductCode());
+            log.info("Subject:{}",model.getSubject());
+            // 电脑
+            if(model.getProductCode().equals("FAST_INSTANT_TRADE_PAY"))
+                return alipayService.pay(model);
+            // 手机
+            else if(model.getProductCode().equals("QUICK_WAP_WAY")) {
+                AlipayTradeWapPayModel model2 = new AlipayTradeWapPayModel();
+                model2.setOutTradeNo(model.getOutTradeNo());
+                model2.setTotalAmount(model.getTotalAmount());
+                model2.setSubject(model.getSubject());
+                model2.setProductCode(model.getProductCode()); // 通常对于移动支付，产品代码设置为QUICK_WAP_WAY
+                return alipayService.pay2(model2);
+            }
+            else{
+                return "你给的什么几把参数";
+            }
         } catch (AlipayApiException e) {
             e.printStackTrace();
             return "支付失败";

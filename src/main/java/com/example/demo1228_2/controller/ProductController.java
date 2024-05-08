@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/product")
@@ -121,6 +122,21 @@ public class ProductController {
         //log.info("{},{}",averageRate,productRateList.size());
         return R.success(product).add("rate_value",product.getRate())
                 .add("rate_num",product.getRate_num());
+    }
+
+    @GetMapping("/getalltye2") // 查所有相同type2商品
+    public R<String> FindOneProduct2(@RequestParam Map<String,String> params){
+        String type2 = params.get("type2");
+        if(type2==null)return R.success("无type2参数");
+
+        List<Map<String,String>> rl = Db.lambdaQuery(Product.class)
+                .eq(Product::getType2,type2)
+                .list()
+                .stream()
+                .map(product -> Map.of(product.getId().toString(),product.getName()))
+                .collect(Collectors.toList());
+
+        return R.success("success").add("type2_list",rl);
     }
 
     /**
@@ -313,6 +329,9 @@ public class ProductController {
         if (params.get("id") != null) {
             query.like(Product::getId, params.get("id"));
         }
+        if (params.get("type2") != null) {
+            query.like(Product::getType2, params.get("type2"));
+        }
         // 排序方式
         if (params.get("value2") != null) {
             String value2 = params.get("value2");
@@ -348,6 +367,9 @@ public class ProductController {
                 break;
             case "e":
                 query.orderByDesc(Product::getRate);
+                break;
+            case "f":
+                query.orderByAsc(Product::getRate);
                 break;
             default:
                 break;

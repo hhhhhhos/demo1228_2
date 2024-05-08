@@ -91,8 +91,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         if(user.getName()==null || user.getPassword()==null)
             return R.error("用户或密码不能为空");
 
-        if(Tool.isValidEmail(user.getName()))
-            return R.error("用户名注册不能使用邮箱（您的账户可能会被重名邮箱验证登录）");
 
         System.out.println(user);
         // 创造筛选条件
@@ -149,15 +147,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
      * @throws CustomException 1
      */
     public void login_check_before(String captch,HttpSession session)throws CustomException{
-        // 断是否登录
+        // 断是否登录 // 但是管理员后台的话 要登录
+        /*
         if(session.getAttribute("IsLogin")!=null){
-            String loginname = "";
+          String loginname = "";
             if(session.getAttribute("LoginName")!=null)
                 loginname = (String)session.getAttribute("LoginName");
 
             log.info("{}:已登录，不能重复登录",loginname);
             throw new CustomException("已登录，不能重复登录");
         }
+         */
+
         // 是否有申请验证码
         if(session.getAttribute("captch")==null)throw new CustomException("未申请验证码");
         // 判断验证码是否正确

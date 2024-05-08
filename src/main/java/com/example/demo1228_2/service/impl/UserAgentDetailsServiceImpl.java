@@ -23,6 +23,7 @@ import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * <p>
@@ -45,10 +46,13 @@ public class UserAgentDetailsServiceImpl extends ServiceImpl<UserAgentDetailsMap
     /**
      * 异步存储访客记录
      * @param params 报头数据
+     * @param insert 是否插入历史数据
+     * @return UserAgentDetails
      */
     @Async
-    public void saveByAsync(Map<String,String> params){
+    public CompletableFuture<UserAgentDetails> saveByAsync(Map<String,String> params,Boolean insert){
 
+        CompletableFuture<UserAgentDetails> future = new CompletableFuture<>();
         // region 初始化数据
         String uuid = params.get("uuid");
         String realIp = params.get("realIp");
@@ -58,7 +62,9 @@ public class UserAgentDetailsServiceImpl extends ServiceImpl<UserAgentDetailsMap
         String method = params.get("method");
         String visitor_name = params.get("visitor_name");
         String wechat_nickname = params.get("wechat_nickname");
-        Long user_id = Long.parseLong(params.get("user_id"));
+        Long user_id = null;
+        if(params.get("user_id")!=null)
+            user_id = Long.parseLong(params.get("user_id"));
         // endregion
 
         // region 获取ip的城市（发请求）
@@ -116,14 +122,19 @@ public class UserAgentDetailsServiceImpl extends ServiceImpl<UserAgentDetailsMap
         // endregion
 
         // 插入数据库
-        if(userAgentDetailsMapper.insert(userAgentDetails)==1){
-            log.info("成功插入访客记录");
-        }
-        else{
-            log.info("插入访客记录失败");
+        if(insert){
+            if(userAgentDetailsMapper.insert(userAgentDetails)==1){
+                log.info("成功插入访客记录");
+            }
+            else{
+                log.info("插入访客记录失败");
+            }
         }
 
+
+        future.complete(userAgentDetails); // 正常完成时设置返回值
+
+        return future;
     }
-
 
 }

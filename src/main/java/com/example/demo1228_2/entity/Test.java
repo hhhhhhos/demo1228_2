@@ -26,6 +26,9 @@ public class Test {
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<BuylistDto> info;
 
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    List<Long> id_list;
+
     private LocalDateTime create_time;
 
     int num;

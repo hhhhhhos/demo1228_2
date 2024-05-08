@@ -43,6 +43,11 @@ public class Product {
     BigDecimal rate;
 
     int rate_num;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    Long product_related_list_id;
+
+    String type2;
     @Version
     private Integer version; // 乐观锁版本号
 }

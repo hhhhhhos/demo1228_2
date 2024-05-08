@@ -34,7 +34,7 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
 
         //异步存访客记录
-        userAgentDetailsService.saveByAsync(handleRequestResponseData(request,response));
+        userAgentDetailsService.saveByAsync(handleRequestResponseData(request,response),true);
 
         log.info("拦截器,拦截到请求{},是否放行？",request.getRequestURI());
         try{
@@ -60,7 +60,7 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
      *
      * @return Map
      */
-    private Map<String,String> handleRequestResponseData(HttpServletRequest request, HttpServletResponse response){
+    public static Map<String,String> handleRequestResponseData(HttpServletRequest request, HttpServletResponse response){
         // cookie拿访客uuid
         String uuid = checkCookieUuid(request,response);
 
@@ -98,6 +98,7 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
         params.put("originalURI",originalURI);
         params.put("method",method);
         params.put("uuid",uuid);
+        params.put("visitor_name",visitor_name);
         params.put("wechat_nickname",wechat_nickname);
         params.put("user_id",user_id);
 
@@ -109,7 +110,7 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
      *
      * @return uuid
      */
-    private String checkCookieUuid(HttpServletRequest request,HttpServletResponse response){
+    private static String checkCookieUuid(HttpServletRequest request,HttpServletResponse response){
         // 从请求中获取cookie中的user_uuid
         String uuid = "doesn't exist";
         Cookie[] cookies = request.getCookies();

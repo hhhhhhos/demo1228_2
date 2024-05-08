@@ -25,7 +25,7 @@ public class WebConfig implements WebMvcConfigurer { //拦截器配置
 
         registry.addInterceptor(adminInterceptor)
                 .excludePathPatterns("/order/selectpagebyadmin","/product/selectpagebyadmin","/user/selectpagebyadmin",
-                        "/user-agent-details/selectbyadmin");
+                        "/user-agent-details/selectbyadmin","/product-related-list/selectpagebyadmin");
     }
 
 }

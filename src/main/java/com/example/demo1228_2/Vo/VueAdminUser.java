@@ -6,4 +6,5 @@ import lombok.Data;
 public class VueAdminUser {
     String username;
     String password;
+    String captch;
 }

@@ -3,15 +3,15 @@ package com.example.demo1228_2.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.example.demo1228_2.config.CustomException;
 import com.example.demo1228_2.config.R;
 import com.example.demo1228_2.dto.DailyUniqueVisitorsDto;
-import com.example.demo1228_2.entity.Order;
-import com.example.demo1228_2.entity.User;
-import com.example.demo1228_2.entity.UserAgentDetails;
+import com.example.demo1228_2.entity.*;
+import com.example.demo1228_2.mapper.DataResultMapper;
 import com.example.demo1228_2.mapper.UserAgentDetailsMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -100,7 +97,7 @@ public class UserAgentDetailsController {
             if(params.get("visitor_name").equals("未登录"))
                 query.isNull(UserAgentDetails::getVisitor_name);
             else
-                query.like(UserAgentDetails::getUser_uuid, params.get("visitor_name"));
+                query.like(UserAgentDetails::getVisitor_name, params.get("visitor_name"));
         }
 
 
@@ -132,7 +129,7 @@ public class UserAgentDetailsController {
         return response;
     }
 
-    @GetMapping("/select_dashboard_visitor") // 查dashboard参数
+    @GetMapping("/select_dashboard_newVisitis") // 查dashboard参数p1
     public List<Map<String, Object>> Dashboard(){
         /*
         LocalDateTime startDate = LocalDate.now().atStartOfDay();
@@ -157,24 +154,41 @@ public class UserAgentDetailsController {
                 .collect(Collectors.toList());
                 */
 
-        List<Map<String,Object>> rawResults = userAgentDetailsMapper.countDailyUniqueVisitors2();
+        List<Map<String,Object>> rawResults = userAgentDetailsMapper.countDailyUniqueVisitors3();
         log.info("{}",rawResults);
 
 
         return rawResults.stream().map(entry -> {
             Map<String, Object> processedEntry = new HashMap<>(entry);
             String uuids = entry.get("user_uuids").toString();
-            List<String> uuidList = Arrays.asList(uuids.split(","));
+            List<String> uuidList = new ArrayList<>();
+            if (!uuids.isEmpty()) {  // 只检查字符串是否非空
+                uuidList = Arrays.asList(uuids.split(","));
+            }
             processedEntry.put("user_uuids", uuidList);
             return processedEntry;
         }).collect(Collectors.toList());
     }
 
-    @PostMapping("/select_dashboard_visitor/click") // 查dashboard参数
-    public List Dashboard(@RequestBody String data){
-        JSONObject jsonObject = JSONObject.parseObject(data);
-        LocalDateTime create_time = jsonObject.getObject("create_time",LocalDateTime.class);
-        log.info("{},{}",create_time,create_time.plusDays(1));
+    @GetMapping("/select_dashboard_purchases") // 查dashboard参数p3
+    public List<Map<String, Object>> Dashboard33(){
+        return userAgentDetailsMapper.countOrder();
+    }
+
+    @GetMapping("/select_dashboard_shoppings") // 查dashboard参数p3
+    public List Dashboard333(){
+        return userAgentDetailsMapper.countBuylist();
+    }
+
+    @PostMapping("/select_dashboard_newVisitis/click") // 查dashboard参数p1
+    public Page Dashboard2(@RequestBody Map<String,Object> params){
+        // 解析日期字符串
+        LocalDate date = LocalDate.parse((String)params.get("create_time"));
+        // 转换为LocalDateTime，默认时间为午夜0点
+        LocalDateTime create_time = date.atStartOfDay();
+        Integer currentPage = (Integer)params.get("currentPage");
+        log.info("{},{}",create_time,currentPage);
+        Page<Map<String, Object>> page = new Page<>(currentPage, 5);
         /*
         List<UserAgentDetails> re = Db.lambdaQuery(UserAgentDetails.class)
                 .between(UserAgentDetails::getCreate_time,create_time,create_time.plusDays(1))
@@ -184,7 +198,53 @@ public class UserAgentDetailsController {
         Map<String, List<UserAgentDetails>> groupedByUuid = re.stream()
                 .collect(Collectors.groupingBy(UserAgentDetails::getUser_uuid));
         */
-        return userAgentDetailsMapper.selectUserAgentSummary(create_time);
+        return userAgentDetailsMapper.selectUserAgentSummary(page,create_time);
+    }
+
+    @PostMapping("/select_dashboard_purchases/click")
+    public IPage<Order> Dashboard23(@RequestBody Map<String, Object> params) {
+        LocalDate date = LocalDate.parse((String) params.get("create_time"));
+        LocalDateTime startTime = date.atStartOfDay();
+        LocalDateTime endTime = date.plusDays(1).atStartOfDay();
+
+        Integer currentPage = (Integer)params.get("currentPage");
+        IPage<Order> page = new Page<>(currentPage, 5);
+
+        return Db.lambdaQuery(Order.class)
+                .between(Order::getCreate_time, startTime, endTime)
+                .orderByDesc(Order::getCreate_time)
+                .page(page);
+    }
+
+    @PostMapping("/select_dashboard_shoppings/click")
+    public IPage<Buylist> Dashboard253(@RequestBody Map<String, Object> params) {
+        LocalDate date = LocalDate.parse((String) params.get("create_time"));
+        LocalDateTime startTime = date.atStartOfDay();
+        LocalDateTime endTime = date.plusDays(1).atStartOfDay();
+
+        Integer currentPage = (Integer)params.get("currentPage");
+        IPage<Buylist> page = new Page<>(currentPage, 5);
+
+        return Db.lambdaQuery(Buylist.class)
+                .between(Buylist::getCreate_time, startTime, endTime)
+                .orderByDesc(Buylist::getCreate_time)
+                .page(page);
+    }
+
+
+
+
+    @Autowired
+    DataResultMapper dataResultMapper;
+
+    @GetMapping("/init_dashboard_four")
+    public Map Dashboard3(){
+        Map<String,Object> params = new HashMap<>();
+        //params.put("p1",userAgentDetailsMapper.countDistinctUserUuid());
+        params.put("p1", dataResultMapper.selectById(45698).getHome_visitors());
+        params.put("p3",Db.lambdaQuery(Order.class).count());
+        params.put("p4",Db.lambdaQuery(Buylist.class).count());
+        return params;
     }
 
 }
