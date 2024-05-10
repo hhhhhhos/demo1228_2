@@ -76,12 +76,16 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
         // 有无登录，登陆了存名字 有无微信名
         String visitor_name = null;
         String wechat_nickname = null;
+        String wechat_headimgurl = null;
+        String wechat_unionid = null;
         String user_id = null;
         try{
             visitor_name  = request.getSession().getAttribute("LoginName").toString();
             // 已登录
             if(visitor_name!=null){
                 wechat_nickname  = request.getSession().getAttribute("Wechat_nickname").toString();
+                wechat_headimgurl  = request.getSession().getAttribute("Wechat_headimgurl").toString();
+                wechat_unionid  = request.getSession().getAttribute("Wechat_unionid").toString();
                 user_id  = request.getSession().getAttribute("IsLogin").toString();
             }
         }catch (Exception e){
@@ -100,6 +104,8 @@ public class LoginInterceptor implements HandlerInterceptor { //拦截器
         params.put("uuid",uuid);
         params.put("visitor_name",visitor_name);
         params.put("wechat_nickname",wechat_nickname);
+        params.put("wechat_headimgurl",wechat_headimgurl);
+        params.put("wechat_unionid",wechat_unionid);
         params.put("user_id",user_id);
 
         return params;

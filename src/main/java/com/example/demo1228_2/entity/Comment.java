@@ -63,6 +63,8 @@ public class Comment implements Serializable {
     @JsonFormat(shape = JsonFormat.Shape.STRING) // Long异常的处理
     private List<Long> love_list;
 
+
+
     /**
      * 是否是置顶
      */
@@ -83,12 +85,11 @@ public class Comment implements Serializable {
      */
     private Integer saw_num;
 
-    /**
-     * 子评论数（如果是父评论）
-     */
-    private Integer sub_num;
-
+    // 是否通过审核
     Boolean pass_examination;
 
+    // 回复给谁
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    Long replay_to_user_id;
 
 }

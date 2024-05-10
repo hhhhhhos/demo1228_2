@@ -67,8 +67,8 @@ public class UserController {
         log.info("查名字:{}",name);
         // 有微信名返回微信名字优先
         if(session.getAttribute("Wechat_nickname")!=null)
-            return R.success(session.getAttribute("Wechat_nickname").toString());
-        return R.success(name);
+            return R.success(session.getAttribute("Wechat_nickname").toString()).add("user_id",session.getAttribute("IsLogin").toString());
+        return R.success(name).add("user_id",session.getAttribute("IsLogin").toString());
     }
 
     @GetMapping("/info") // 查当前用户信息
@@ -467,6 +467,8 @@ public class UserController {
 
         // (如果不是本名，改名字了)查数据库有没相同名
         if(!Objects.equals(session.getAttribute("LoginName").toString(), user.getName())){
+            if(user.getName().length()>6)return R.error("名字要小于7个字符");
+
             // 创造筛选条件
             LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
             // 有这个名字吗
@@ -664,6 +666,7 @@ public class UserController {
             BuylistDto buylistDto = buylistDtoLists.get(0);
             Buylist buylist = buylistDto.getBuylist();
             buylist.setCreate_time(LocalDateTime.now());
+            buylist.setUser_id(Long.parseLong(session.getAttribute("IsLogin").toString()));
             buylistDto.setBuylist(buylist);
             Long productId = buylistDto.getBuylist().getProduct_id();
             BigDecimal productNum = new BigDecimal(buylistDto.getBuylist().getProduct_num());

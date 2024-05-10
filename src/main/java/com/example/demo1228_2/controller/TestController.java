@@ -5,12 +5,17 @@ import com.alipay.api.AlipayApiException;
 import com.alipay.api.domain.AlipayTradePagePayModel;
 import com.alipay.api.domain.AlipayTradeWapPayModel;
 import com.alipay.api.internal.util.AlipaySignature;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo1228_2.config.*;
 import com.example.demo1228_2.dto.DelayedTaskDto;
+import com.example.demo1228_2.entity.Comment;
 import com.example.demo1228_2.entity.Test;
+import com.example.demo1228_2.mapper.CommentMapper;
 import com.example.demo1228_2.service.impl.*;
 import com.google.code.kaptcha.impl.DefaultKaptcha;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -250,27 +255,14 @@ public class TestController {
         return delayQueueService.removeTask(task);
     }
 
+    @Autowired
+    CommentMapper commentMapper;
+
     @GetMapping("/fuck")
-    public ResponseEntity<byte[]> getCaptcha(HttpServletResponse response) throws IOException {
-        CaptchaGenerator generator = new CaptchaGenerator();
-        DefaultKaptcha kaptcha = generator.createKaptcha();
-        String text = kaptcha.createText();  // 生成验证码文本
-
-        // 通常这里还会将验证码文本存储在Session中，以便验证用户输入
-        // request.getSession().setAttribute("CAPTCHA_KEY", text);
-
-        BufferedImage image = kaptcha.createImage(text);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(image, "png", baos);
-
-        // 清除缓存
-        response.setHeader("Cache-Control", "no-store");
-        response.setHeader("Pragma", "no-cache");
-        response.setDateHeader("Expires", 0);
-        response.setContentType("image/png");
-
-        log.info("验证码：{}",text);
-        return new ResponseEntity<>(baos.toByteArray(), HttpStatus.OK);
+    public IPage testt() throws IOException {
+        Long product_id=1L;
+        Page page = new Page<>(1, 5);
+        return commentMapper.selectByProductIdLeftJoinOrderByLike(page,product_id);
     }
 
     @Autowired

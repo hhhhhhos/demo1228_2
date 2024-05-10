@@ -77,8 +77,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         session.setAttribute("LoginName",user_result.getName());    // 姓名
         session.setAttribute("Role",user_result.getRole());  // 角色
         session.setAttribute("LoginDate", Tool.getDateTime()); // 登录时间
-        if(user_result.getWechat_nickname()!=null)
+        if(user_result.getWechat_nickname()!=null) {
             session.setAttribute("Wechat_nickname", user_result.getWechat_nickname()); // 微信名
+            session.setAttribute("Wechat_headimgurl", user_result.getWechat_headimgurl()); // 微信名
+            session.setAttribute("Wechat_unionid", user_result.getWechat_unionid()); // 微信名
+        }
     }
 
     /**
@@ -90,7 +93,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         // 防空
         if(user.getName()==null || user.getPassword()==null)
             return R.error("用户或密码不能为空");
-
+        if(user.getName().length()>6)
+            return R.error("名字要小于7个字符");
 
         System.out.println(user);
         // 创造筛选条件

@@ -95,23 +95,7 @@ public class VueAdminTemplateController {
         }
     }
 
-    @GetMapping("/image") //获取图片测试 暂未用到
-    public ResponseEntity<Resource> getImage(@RequestParam Map<String, String> params, HttpSession session) {
-        try {
-            Path filePath = Paths.get("path/to/your/image.jpg");
-            Resource resource = new UrlResource(filePath.toUri());
-            if (resource.exists() || resource.isReadable()) {
-                return ResponseEntity.ok()
-                        .contentType(MediaType.IMAGE_JPEG)
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-                        .body(resource);
-            } else {
-                throw new RuntimeException("Could not read the file!");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error: " + e.getMessage());
-        }
-    }
+
 
     /*
     @PostMapping("/upload") // 上传图片到Tool.PHOTO_SAVE_URL路径
@@ -130,14 +114,7 @@ public class VueAdminTemplateController {
     }
     */
 
-    @DeleteMapping("/delete") // 删除包含后缀名字图测试
-    public boolean delete(String name){
-        // 指定要删除的文件路径
-        String filePath = Tool.PHOTO_SAVE_URL + name; // 替换为实际的文件路径
-        File file = new File(filePath);
-        // 尝试删除文件
-        return file.delete();
-    }
+
 
 
 

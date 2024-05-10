@@ -62,6 +62,8 @@ public class UserAgentDetailsServiceImpl extends ServiceImpl<UserAgentDetailsMap
         String method = params.get("method");
         String visitor_name = params.get("visitor_name");
         String wechat_nickname = params.get("wechat_nickname");
+        String wechat_headimgurl = params.get("wechat_headimgurl");
+        String wechat_unionid = params.get("wechat_unionid");
         Long user_id = null;
         if(params.get("user_id")!=null)
             user_id = Long.parseLong(params.get("user_id"));
@@ -118,6 +120,8 @@ public class UserAgentDetailsServiceImpl extends ServiceImpl<UserAgentDetailsMap
         userAgentDetails.setCity(location);
         userAgentDetails.setVisitor_name(visitor_name);
         userAgentDetails.setWechat_nickname(wechat_nickname);
+        userAgentDetails.setWechat_headimgurl(wechat_headimgurl);
+        userAgentDetails.setWechat_unionid(wechat_unionid);
         userAgentDetails.setUser_id(user_id);
         // endregion
 

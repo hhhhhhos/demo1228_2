@@ -13,6 +13,8 @@ import com.example.demo1228_2.dto.DailyUniqueVisitorsDto;
 import com.example.demo1228_2.entity.*;
 import com.example.demo1228_2.mapper.DataResultMapper;
 import com.example.demo1228_2.mapper.UserAgentDetailsMapper;
+import com.example.demo1228_2.mapper.UserMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -98,6 +100,9 @@ public class UserAgentDetailsController {
                 query.isNull(UserAgentDetails::getVisitor_name);
             else
                 query.like(UserAgentDetails::getVisitor_name, params.get("visitor_name"));
+        }
+        if (params.get("wechat_nickname") != null) {
+            query.like(UserAgentDetails::getWechat_nickname, params.get("wechat_nickname"));
         }
 
 
@@ -201,19 +206,37 @@ public class UserAgentDetailsController {
         return userAgentDetailsMapper.selectUserAgentSummary(page,create_time);
     }
 
+    @Autowired
+    UserMapper userMapper;
+
     @PostMapping("/select_dashboard_purchases/click")
-    public IPage<Order> Dashboard23(@RequestBody Map<String, Object> params) {
+    public IPage Dashboard23(@RequestBody Map<String, Object> params) {
         LocalDate date = LocalDate.parse((String) params.get("create_time"));
         LocalDateTime startTime = date.atStartOfDay();
         LocalDateTime endTime = date.plusDays(1).atStartOfDay();
 
         Integer currentPage = (Integer)params.get("currentPage");
-        IPage<Order> page = new Page<>(currentPage, 5);
+        IPage page = new Page<>(currentPage, 5);
 
-        return Db.lambdaQuery(Order.class)
+        page = Db.lambdaQuery(Order.class)
                 .between(Order::getCreate_time, startTime, endTime)
                 .orderByDesc(Order::getCreate_time)
                 .page(page);
+        List<Order> Record = page.getRecords();
+
+        // 聚合用户信息
+        ObjectMapper mapper = new ObjectMapper();
+        page.setRecords(Record.stream()
+                .map(order -> {
+                    Long Uid = order.getUser_id();
+                    LocalDateTime ct = order.getCreate_time();
+                    Map<String,Object> processedEntry = mapper.convertValue(order,Map.class);
+                    processedEntry.put("create_time",ct); //时间映射不正确 手动映射
+                    processedEntry.put("user_info",userMapper.selectById(Uid));
+                    return processedEntry;
+                }).collect(Collectors.toList())
+        );
+        return page;
     }
 
     @PostMapping("/select_dashboard_shoppings/click")

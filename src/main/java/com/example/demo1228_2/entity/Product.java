@@ -44,8 +44,8 @@ public class Product {
 
     int rate_num;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING)
-    Long product_related_list_id;
+    //@JsonFormat(shape = JsonFormat.Shape.STRING)
+    //Long product_related_list_id;
 
     String type2;
     @Version

@@ -26,10 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -48,8 +45,11 @@ public class ProductController {
     @Autowired
     GlobalProperties globalProperties;
 
+    @Autowired
+    ObjectMapper objectMapper;
+
     @GetMapping("/page") // 分页查询 接收params //防空设默认
-    public R<Page<Product>> FindPageProduct(@RequestParam Map<String,String> params){
+    public R<Page> FindPageProduct(@RequestParam Map<String,String> params){
         //log.info("!!:{}",FType);
         try {
 
@@ -64,7 +64,7 @@ public class ProductController {
             // 空参数抛异常
             if(currentPage == 0 || PageSize == 0 )throw new CustomException("分页查询参数为空");
             // 分页查询
-            Page<Product> page = new Page<>(currentPage, PageSize);
+            Page page = new Page<>(currentPage, PageSize);
 
             // FName不为空 筛选名字
             if(FName != null)query.like(Product::getName,FName);
@@ -79,7 +79,7 @@ public class ProductController {
 
 
             // 执行查询
-            Page<Product> res = query.page(page);
+            page = query.page(page);
 
             /*
             //控制台打印json
@@ -93,8 +93,18 @@ public class ProductController {
             DataResult dataResult = dataResultMapper.selectById(45698);
             dataResult.setHome_visitors(dataResult.getHome_visitors()+1);
             dataResultMapper.updateById(dataResult);
+            // 加点参数
+            List<Product> res = page.getRecords();
+            List<Map<String,Object>> nres = res.stream().map(product -> {
+                Map<String,Object> entry = new HashMap<>(objectMapper.convertValue(product, Map.class));
+                entry.put("comment_num",Db.lambdaQuery(Comment.class)
+                        .eq(Comment::getProduct_id,product.getId())
+                        .count());
+                return entry;
+            }).collect(Collectors.toList());
+            page.setRecords(nres);
 
-            return R.success(res).add("home_visitors",dataResult.getHome_visitors());
+            return R.success(page).add("home_visitors",dataResult.getHome_visitors());
         }catch(Exception e){
             log.info("分页查询失败：{}",e.getMessage());
             return R.error(e.getMessage());
