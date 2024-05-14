@@ -3,8 +3,10 @@ package com.example.demo1228_2.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.example.demo1228_2.config.CustomException;
 import com.example.demo1228_2.config.Tool;
+import com.example.demo1228_2.entity.User;
 import com.example.demo1228_2.entity.UserAgentDetails;
 import com.example.demo1228_2.mapper.UserAgentDetailsMapper;
+import com.example.demo1228_2.mapper.UserMapper;
 import com.example.demo1228_2.service.IUserAgentDetailsService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,8 @@ public class UserAgentDetailsServiceImpl extends ServiceImpl<UserAgentDetailsMap
     @Autowired
     UserAgentDetailsMapper userAgentDetailsMapper;
 
+    @Autowired
+    UserMapper userMapper;
     @Autowired
     HttpService httpService;
 
@@ -106,6 +110,14 @@ public class UserAgentDetailsServiceImpl extends ServiceImpl<UserAgentDetailsMap
             log.info("ip地址请求失败：{}",e.getMessage());
         }
         // endregion
+
+        // 设置IP归属地（登录时）(防空)
+        if(originalURI!=null && originalURI.contains("login")){
+            User user = userMapper.selectById(user_id);
+            user.setIp_location(location);
+            userMapper.updateById(user);
+        }
+
 
         // region 初始化UserAgentDetails
         // 分析userAgent

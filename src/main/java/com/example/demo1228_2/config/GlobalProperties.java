@@ -28,6 +28,10 @@ public class GlobalProperties {
     public String  REDIS_SECRET;
     @Value("${email.secret}")
     public String  EMAIL_PASSWORD;
+
+    @Value("${openai.key}")
+    public String OPENAI_KEY;
+
     @Value("${file.saveurl}")
     public String  PHOTO_SAVE_URL;
 

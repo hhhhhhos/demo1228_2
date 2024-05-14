@@ -203,6 +203,7 @@ public class UserAgentDetailsController {
         Map<String, List<UserAgentDetails>> groupedByUuid = re.stream()
                 .collect(Collectors.groupingBy(UserAgentDetails::getUser_uuid));
         */
+
         return userAgentDetailsMapper.selectUserAgentSummary(page,create_time);
     }
 

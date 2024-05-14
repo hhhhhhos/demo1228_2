@@ -85,7 +85,12 @@ public final class Tool {
      * @return Long
      */
     public static Long getUserSessionId(HttpSession session){
-        return Long.parseLong(session.getAttribute("IsLogin").toString());
+        // 小心未登录 空指针异常啊！
+        if(session.getAttribute("IsLogin")!=null)
+            return Long.parseLong(session.getAttribute("IsLogin").toString());
+        // 未登录 返回0
+        else
+            return 0L;
     }
 
     /**

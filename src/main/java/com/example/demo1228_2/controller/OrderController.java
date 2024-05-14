@@ -20,6 +20,7 @@ import com.example.demo1228_2.service.IOrderService;
 import com.example.demo1228_2.service.IProductService;
 import com.example.demo1228_2.service.impl.OrderServiceImpl;
 import com.example.demo1228_2.service.impl.UserServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +29,7 @@ import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -184,11 +186,13 @@ public class OrderController {
     @Autowired
     OrderMapper orderMapper;
 
+    @Autowired
+    ObjectMapper objectMapper;
     /**
      * 查询订单（管理员）
      */
     @GetMapping("/selectpagebyadmin") // 分页查询 接收params //防空设默认
-    public R<Page<Order>> FindPageProducts(@RequestParam Map<String, String> params, HttpSession session){
+    public R<Page> FindPageProducts(@RequestParam Map<String, String> params, HttpSession session){
         // 使用LambdaQueryChainWrapper构建查询
         LambdaQueryChainWrapper<Order> query = new LambdaQueryChainWrapper<>(orderMapper);
 
@@ -207,16 +211,28 @@ public class OrderController {
         if (params.get("id") != null) {
             query.like(Order::getId, params.get("id"));
         }
+        if (params.get("status") != null) {
+            query.like(Order::getStatus, params.get("status"));
+        }
 
         Page<Order> page = new Page<>(1,10);
         // 防空参数
         if(params.get("currentPage")!=null && params.get("PageSize")!=null)
             page = new Page<>(Long.parseLong(params.get("currentPage")),Long.parseLong(params.get("PageSize")));
         // 执行分页查询
-        Page<Order> result = query.orderByDesc(Order::getCreate_time).page(page);
+        Page result = query.orderByDesc(Order::getCreate_time).page(page);
+
+        List<Order> rec = result.getRecords();
+        // 加点数据
+        result.setRecords(rec.stream().map(order->{
+            Map<String,Object> newEntry = objectMapper.convertValue(order,Map.class);
+            Map<String,Object> user_map = objectMapper.convertValue(userService.getById(order.getUser_id()),Map.class);
+            newEntry.put("user_info",user_map);
+            return newEntry;
+        }).collect(Collectors.toList()));
 
         // map返回筛选
-        R<Page<Order>> response = R.success(result);
+        R<Page> response = R.success(result);
         response.setMap(params);
 
         return response;

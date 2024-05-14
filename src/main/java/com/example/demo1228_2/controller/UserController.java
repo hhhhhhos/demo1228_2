@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.Jedis;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
@@ -59,8 +60,8 @@ public class UserController {
     //UserMapper usermapper;
     UserMapper usermapper;
 
-    @GetMapping("/name") // 查名字
-    public R<String> FindUserName(HttpSession session){
+    @GetMapping("/name2") // 查名字(旧版,废弃)
+    public R<String> FindUserName2(HttpSession session){
         Object object= session.getAttribute("LoginName");
         String name = "";
         if(object!=null)name = (String)object;
@@ -71,28 +72,36 @@ public class UserController {
         return R.success(name).add("user_id",session.getAttribute("IsLogin").toString());
     }
 
+    @GetMapping("/name") // 查名字 通过返回类型判断是否登录 维持前端页登录状态
+    public R<String> FindUserName(HttpSession session){
+        if(session.getAttribute("LoginName")==null)
+            return R.error("未登录");
+
+        // 有微信名返回微信名字优先
+        if(session.getAttribute("Wechat_nickname")!=null)
+            return R.success(session.getAttribute("Wechat_nickname").toString()).add("user_id",session.getAttribute("IsLogin").toString());
+        else
+            return R.success(session.getAttribute("LoginName").toString()).add("user_id",session.getAttribute("IsLogin").toString());
+    }
+
+
+
+
     @GetMapping("/info") // 查当前用户信息
-    public R<User> FindUserInfo(HttpSession session){
-        User user_result;
-        Object object= session.getAttribute("LoginName");
-        String name = "";
-        if(object!=null){
-            name = (String)object;
-            // 创造筛选条件
-            LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
-            // 有这个名字吗
-            queryWrapper.eq(User::getName,name);
-            try {
-                user_result = usermapper.selectOne(queryWrapper);
-            }catch (Exception e){
-                log.info("数据库有多个重名用户");
-                return R.error("数据库有多个重名用户");
-            }
-            log.info("查询user信息成功");
-            return R.success(user_result);
-        }else{
-            log.info("session无名字，原因未知");
-            return R.error("session无名字，原因未知");
+    public R FindUserInfo(HttpSession session){
+        User user = usermapper.selectById(Tool.getUserSessionId(session));
+        if(user == null)return R.error("未找到用户");
+        else return R.success(user);
+    }
+
+    @GetMapping("/otheruserinfo") // 查其他用户信息
+    public R<User> FindOtherUserInfo(@RequestParam Long user_id, HttpSession session){
+        User user = usermapper.selectById(user_id);
+        if(user==null)
+            return R.error("用户不存在");
+        else{
+            user.setWechat_unionid(""); //隐藏微信uuid
+            return R.success(user);
         }
     }
 
@@ -227,7 +236,7 @@ public class UserController {
     }
 
     @PostMapping("/login") // 登录  //session IsLogin判断状态
-    public R<String> UserLogin(@RequestBody String jsonString,HttpSession session){
+    public R<String> UserLogin(@RequestBody String jsonString, HttpSession session, HttpServletRequest request){
         JSONObject jsonObject = JSONObject.parseObject(jsonString);
 
         User user = jsonObject.getObject("user",User.class);
@@ -238,7 +247,7 @@ public class UserController {
         }catch (Exception e){
             return R.error(e.getMessage());
         }
-        return userService.login(user,session);
+        return userService.login(user,session,request);
 
     }
 
@@ -254,7 +263,7 @@ public class UserController {
      * @return 1
      */
     @PostMapping("/loginByWechat")
-    public R<String> UserLogin2(@RequestBody Map<String,String> params,HttpSession session){
+    public R<String> UserLogin2(@RequestBody Map<String,String> params,HttpSession session,HttpServletRequest request){
         log.info(params.get("code"));
         log.info(params.get("state"));
         log.info(params.get("is_mobile"));
@@ -309,13 +318,13 @@ public class UserController {
                 user.setWechat_nickname(body.getString("nickname"));
                 user.setWechat_headimgurl(body.getString("headimgurl"));
                 usermapper.updateById(user);
-                userService.setLoginSession(user,session);
+                userService.setLoginSession(user,session,request);
                 return R.success("微信登录成功").add("username",user.getWechat_nickname());
             }else{
-                String name = "微信用户："+UUID.randomUUID();
+                String name = "微信："+UUID.randomUUID();
                 String password = UUID.randomUUID().toString();
                 user = new User();
-                user.setName(name);
+                user.setName(name.substring(0,8));
                 user.setPassword(Tool.encode(password));
                 user.setWechat_nickname(body.getString("nickname"));
                 user.setWechat_headimgurl(body.getString("headimgurl"));
@@ -325,14 +334,17 @@ public class UserController {
                 int count =0;
                 while(count<=3)
                     try{
+                        name = "微信："+UUID.randomUUID();
+                        user.setName(name.substring(0,8));
                         userService.regisByWeChatAndLogin(user,session);
                         break;
                     }catch (Exception e){
                         count++;
                     }
 
+                if(count==4)throw new CustomException("尝试超过三次，建议重试");
                 user.setPassword(password);
-                return userService.login(user,session);
+                return userService.login(user,session,request);
             }
 
 
@@ -343,7 +355,7 @@ public class UserController {
     }
 
     @PostMapping("/loginByEmail") // 邮箱验证码登录
-    public R<String> UserLogin3(@RequestBody Map<String,String> params,HttpSession session){
+    public R<String> UserLogin3(@RequestBody Map<String,String> params,HttpSession session,HttpServletRequest request){
         String email = params.get("email");
         String code = params.get("code");
         log.info(params.get("email"));
@@ -373,7 +385,7 @@ public class UserController {
                     // 是否注册
                     if(Db.lambdaQuery(User.class).eq(User::getName,email).exists()){
                         //是 1登录状态 2删redis
-                        userService.setLoginSession(Db.lambdaQuery(User.class).eq(User::getName,email).one(),session);
+                        userService.setLoginSession(Db.lambdaQuery(User.class).eq(User::getName,email).one(),session,request);
                         jedis.del(email);
                         return R.success("登录成功");
                     }else{
@@ -381,7 +393,7 @@ public class UserController {
                         if(!userService.regis(new User(email,UUID.randomUUID().toString())).getCode().equals(1))
                             return R.error("注册失败");
                         // 2登录状态
-                        userService.setLoginSession(Db.lambdaQuery(User.class).eq(User::getName,email).one(),session);
+                        userService.setLoginSession(Db.lambdaQuery(User.class).eq(User::getName,email).one(),session,request);
                         // 3删redis
                         jedis.del(email);
                         return R.success("登录成功");
@@ -446,6 +458,9 @@ public class UserController {
 
         // 不能改版本
         if(!Objects.equals(db_user.getVersion(), user.getVersion()))return R.error("不能更改版本");
+
+        // 不能改版本
+        if(!Objects.equals(db_user.getIp_location(), user.getIp_location()))return R.error("不能更改归属地");
 
         // 用.equals(回报空异常
         //if (!db_user.getWechat_nickname().equals(user.getWechat_nickname()))return R.error("不能更改微信数据");

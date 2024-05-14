@@ -6,6 +6,7 @@ import com.example.demo1228_2.Vo.Address;
 import com.example.demo1228_2.config.JsonToListTypeHandler;
 import com.example.demo1228_2.dto.BuylistDto;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

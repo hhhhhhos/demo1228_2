@@ -84,6 +84,7 @@ public interface UserAgentDetailsMapper extends BaseMapper<UserAgentDetails> {
             "DATE_FORMAT(MIN(create_time), '%Y-%m-%d %H:%i:%s') AS min_create_time, " +
             "GROUP_CONCAT(DISTINCT visitor_name ORDER BY visitor_name) AS visitor_names, " +
             "GROUP_CONCAT(DISTINCT city) AS city, " +
+            "GROUP_CONCAT(DISTINCT deviceName) AS deviceName, " +
             "GROUP_CONCAT(DISTINCT wechat_nickname ORDER BY wechat_nickname) AS wechat_nickname, " +
             "GROUP_CONCAT(DISTINCT wechat_headimgurl ORDER BY wechat_headimgurl) AS wechat_headimgurl " +
             "FROM t_user_agent_details " +

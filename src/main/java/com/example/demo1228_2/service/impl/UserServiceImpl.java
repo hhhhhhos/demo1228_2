@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.List;
 
@@ -26,13 +27,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Autowired
     UserMapper userMapper;
 
+    @Autowired
+    HttpService httpService;
+
     /**
      * 对比用户名密码是否正确 设立登录状态
      * @param user 1
      * @param session 1
      * @return 1
      */
-    public R<String> login(User user, HttpSession session){
+    public R<String> login(User user, HttpSession session, HttpServletRequest request){
         // 创造筛选条件
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         // 有这个名字吗
@@ -54,7 +58,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
                 log.info("设置session登录IsLogin为用户Id");
                 // 设定登录状态
-                setLoginSession(user_result,session);
+                setLoginSession(user_result,session,request);
 
                 return R.success("密码正确，登陆成功").add("username",user.getName());
                 //如果不一样
@@ -72,7 +76,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     /**
      * 设定登录状态session
      */
-    public void setLoginSession(User user_result,HttpSession session){
+    public void setLoginSession(User user_result,HttpSession session,HttpServletRequest request){
         session.setAttribute("IsLogin",user_result.getId()); // 用户id
         session.setAttribute("LoginName",user_result.getName());    // 姓名
         session.setAttribute("Role",user_result.getRole());  // 角色
@@ -81,6 +85,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             session.setAttribute("Wechat_nickname", user_result.getWechat_nickname()); // 微信名
             session.setAttribute("Wechat_headimgurl", user_result.getWechat_headimgurl()); // 微信名
             session.setAttribute("Wechat_unionid", user_result.getWechat_unionid()); // 微信名
+        }
+        // 归属地赋值
+        String realIp = request.getHeader("X-Real-IP");
+        if(realIp!=null)
+            session.setAttribute("X-Real-IP", realIp);
+        try {
+            httpService.sendGetIpLocationToDb(session);
+        }catch (Exception e){
+            log.info(e.getMessage());
         }
     }
 
@@ -177,4 +190,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         session.removeAttribute("captch");
 
     }
+
+
 }

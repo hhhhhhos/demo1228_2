@@ -281,6 +281,8 @@ public class CommentController {
 
         if(comment_info.length()>200)
             return R.error("评论过长");
+        if(comment_info.length()==0)
+            return R.error("评论不能为空");
 
 
         CompletableFuture<UserAgentDetails> future = userAgentDetailsService.saveByAsync(handleRequestResponseData(request,response),false);
@@ -308,6 +310,26 @@ public class CommentController {
         });
         log.info("结束咯");
         return R.success("你的评论将在审核后展示");
+    }
+
+    /**
+     * 删一个评论
+     * @param session 1
+     * @return 1
+     */
+    @DeleteMapping("/deleteone")
+    public R<String> FindOneProduct(@RequestParam Long id,HttpSession session){
+        if(id==null||id==0)
+            return R.error("参数缺失");
+
+        Comment comment = commentMapper.selectById(id);
+        if(comment==null||!comment.getUser_id().equals(Tool.getUserSessionId(session)))
+            return R.error("不能删除非本人评论");
+
+        if(commentMapper.deleteById(id)!=1)
+            return R.error("数据库删除失败");
+        else
+            return R.success("删除成功");
     }
 
     /**

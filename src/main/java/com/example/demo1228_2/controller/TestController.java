@@ -1,6 +1,7 @@
 package com.example.demo1228_2.controller;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.domain.AlipayTradePagePayModel;
 import com.alipay.api.domain.AlipayTradeWapPayModel;
@@ -9,10 +10,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.demo1228_2.config.*;
 import com.example.demo1228_2.dto.DelayedTaskDto;
+import com.example.demo1228_2.dto.OpenAiJsonMessageObject;
+import com.example.demo1228_2.dto.OpenAiSendJson;
 import com.example.demo1228_2.entity.Comment;
 import com.example.demo1228_2.entity.Test;
 import com.example.demo1228_2.mapper.CommentMapper;
 import com.example.demo1228_2.service.impl.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.code.kaptcha.impl.DefaultKaptcha;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.units.qual.A;
@@ -27,10 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * <p>
@@ -258,11 +259,46 @@ public class TestController {
     @Autowired
     CommentMapper commentMapper;
 
-    @GetMapping("/fuck")
-    public IPage testt() throws IOException {
-        Long product_id=1L;
-        Page page = new Page<>(1, 5);
-        return commentMapper.selectByProductIdLeftJoinOrderByLike(page,product_id);
+    @Autowired
+    HttpService httpService;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @Autowired
+    GlobalProperties globalProperties;
+
+    @PostMapping("/fuck")
+    public R<Map> testt(@RequestBody List<OpenAiJsonMessageObject> list_data){
+        try {
+            if(list_data.size()>=10)
+                throw new CustomException("总轮次超过10");
+            for(OpenAiJsonMessageObject openAiJsonMessageObject2:list_data){
+                if(!openAiJsonMessageObject2.getRole().equals("user") && !openAiJsonMessageObject2.getRole().equals("assistance"))
+                    throw new CustomException("角色错误");
+                if(openAiJsonMessageObject2.getContent().length()>=50)
+                    throw new CustomException("内容过长");
+            }
+            // 构造系统提示词对象
+            OpenAiJsonMessageObject openAiJsonMessageObject = new OpenAiJsonMessageObject();
+            openAiJsonMessageObject.setRole("system");
+            openAiJsonMessageObject.setContent("你是一个黑色幽默，不耐烦讲粗口的混混电子商城客服");
+            list_data.add(0,openAiJsonMessageObject); // 头插入系统提示词
+            // 构造总json对象
+            OpenAiSendJson openAiSendJson = new OpenAiSendJson();
+            openAiSendJson.setModel("gpt-3.5-turbo");
+            openAiSendJson.setMessages(list_data);
+            // 发送请求
+            Map<String,Object> body = objectMapper.readValue(httpService.sendPostToOpenAI(globalProperties.OPENAI_KEY
+            ,objectMapper.writeValueAsString(openAiSendJson)).get("body"),Map.class);
+            List<Object> list = (List<Object>) body.get("choices");
+            Map<String, Object> map = (Map<String, Object>) list.get(0);
+            Map<String, Object> answer = (Map<String, Object>) map.get("message");
+            return R.success(answer);
+        }catch (Exception e){
+            log.info(e.getMessage());
+            return R.error(e.getMessage());
+        }
     }
 
     @Autowired

@@ -38,7 +38,7 @@ public class VueAdminTemplateController {
     UserServiceImpl userService;
 
     @PostMapping("/user/login") // 管理页面登录
-    public R Login(@RequestBody VueAdminUser user, HttpSession session){
+    public R Login(@RequestBody VueAdminUser user, HttpSession session,HttpServletRequest request){
         log.info("{}",user);
         VueAdminToken vueAdminToken = new VueAdminToken();
         vueAdminToken.setToken("123"); // 这token没啥用 我用session验证状态
@@ -58,7 +58,7 @@ public class VueAdminTemplateController {
 
             log.info("{}:密码正确，登陆成功",db_user.getName());
             log.info("设置session登录IsLogin为用户Id");
-            userService.setLoginSession(db_user,session);
+            userService.setLoginSession(db_user,session,request);
 
             return new R<>(20000,null,vueAdminToken );
 

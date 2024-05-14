@@ -27,6 +27,8 @@ public class User {
     private String sex;
     private String phone;
 
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime create_time;
     private String password;
@@ -51,5 +53,6 @@ public class User {
         this.password = password;
     }
 
+    String ip_location;
     public User(){}
 }
